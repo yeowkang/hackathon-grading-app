@@ -9,7 +9,23 @@ export default async function ProjectsPage({
 }: {
   searchParams: { submitted?: string };
 }) {
-  const projects = await getProjects();
+  let projects;
+  try {
+    projects = await getProjects();
+  } catch {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] px-4">
+        <div className="text-center max-w-md">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-white mb-2">Database not connected</h2>
+          <p className="text-gray-400 text-sm">
+            Go to your Vercel project → <strong className="text-gray-300">Storage</strong> → create a{' '}
+            <strong className="text-gray-300">KV database</strong> and connect it to this project, then redeploy.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const sorted = [...projects].sort((a, b) => a.submittedAt - b.submittedAt);
 
   return (
