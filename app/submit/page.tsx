@@ -26,9 +26,9 @@ const fields: { key: keyof Omit<FormData, 'teamMembers'>; label: string; hint: s
   { key: 'teamName', label: 'Team Name', hint: 'Your team or company name', rows: 1 },
   { key: 'projectName', label: 'Project Name', hint: 'What is your project called?', rows: 1 },
   { key: 'useCase', label: 'Example Use Case', hint: 'A one-liner on what your solution does — e.g. "Automates invoice approvals by routing them to the right approver based on amount and department."', rows: 1, maxLength: 100 },
-  { key: 'description', label: 'Project Description', hint: 'Give a clear overview of what your project does', rows: 4 },
-  { key: 'innovative', label: 'Innovation', hint: 'Explain how your project is innovative — what makes it unique or novel?', rows: 4 },
-  { key: 'businessValue', label: 'Business Value', hint: 'Explain how your project delivers business value — who benefits and how?', rows: 4 },
+  { key: 'description', label: 'Project Description', hint: 'Give a clear overview of what your project does', rows: 4, maxLength: 500 },
+  { key: 'innovative', label: 'Innovation', hint: 'Explain how your project is innovative — what makes it unique or novel?', rows: 4, maxLength: 500 },
+  { key: 'businessValue', label: 'Business Value', hint: 'Explain how your project delivers business value — who benefits and how?', rows: 4, maxLength: 500 },
 ];
 
 export default function SubmitPage() {

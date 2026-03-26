@@ -32,6 +32,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Example Use Case must be 100 characters or fewer.' }, { status: 400 });
   }
 
+  for (const [field, label] of [['description', 'Project Description'], ['innovative', 'Innovation'], ['businessValue', 'Business Value']] as const) {
+    if (body[field]?.trim().length > 500) {
+      return NextResponse.json({ error: `${label} must be 500 characters or fewer.` }, { status: 400 });
+    }
+  }
+
   const filtered = (teamMembers as string[]).filter((m) => m.trim());
   if (filtered.length === 0) {
     return NextResponse.json({ error: 'At least one team member is required.' }, { status: 400 });
