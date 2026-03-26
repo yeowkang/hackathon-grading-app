@@ -3,11 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Project, Vote, Scores, ArchiveSummary } from '@/lib/types';
 
-const ADMIN_PASSWORD = 'Workato123!';
 type Tab = 'overview' | 'audit' | 'scores' | 'archives';
 type Phase = 'submission' | 'voting' | 'closed';
-
-const authHeader = { Authorization: `Bearer ${ADMIN_PASSWORD}` };
 
 function medal(rank: number) {
   return rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank + 1}`;
@@ -81,6 +78,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [pwInput, setPwInput] = useState('');
   const [pwError, setPwError] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [tab, setTab] = useState<Tab>('overview');
 
   const [phase, setPhase] = useState<Phase>('submission');
@@ -120,15 +118,23 @@ export default function AdminPage() {
     if (authed) loadAll();
   }, [authed, loadAll]);
 
-  const login = (e: React.FormEvent) => {
+  const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pwInput === ADMIN_PASSWORD) {
+    const res = await fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwInput }),
+    });
+    if (res.ok) {
+      setAdminPassword(pwInput);
       setAuthed(true);
       setPwError('');
     } else {
       setPwError('Incorrect password.');
     }
   };
+
+  const authHeader = { Authorization: `Bearer ${adminPassword}` };
 
   const setPhaseHandler = async (newPhase: Phase) => {
     await fetch('/api/settings', {

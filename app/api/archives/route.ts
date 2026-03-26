@@ -5,15 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { getArchiveSummaries, createArchive, getProjects, getVotes } from '@/lib/kv';
 import type { Archive } from '@/lib/types';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'Workato123!';
-
 export async function GET() {
   const archives = await getArchiveSummaries();
   return NextResponse.json(archives);
 }
 
 export async function POST(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${ADMIN_PASSWORD}`) {
+  if (req.headers.get('authorization') !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
