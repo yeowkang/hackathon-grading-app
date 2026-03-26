@@ -1,9 +1,23 @@
 import { Redis } from '@upstash/redis';
 
-const kv = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+const url =
+  process.env.UPSTASH_REDIS_REST_URL ||
+  process.env.KV_REST_API_URL ||
+  process.env.REDIS_URL;
+
+const token =
+  process.env.UPSTASH_REDIS_REST_TOKEN ||
+  process.env.KV_REST_API_TOKEN ||
+  process.env.REDIS_TOKEN;
+
+if (!url || !token) {
+  throw new Error(
+    `Redis env vars not found. Checked: UPSTASH_REDIS_REST_URL, KV_REST_API_URL, REDIS_URL. ` +
+    `Please check your Vercel project Settings → Environment Variables.`
+  );
+}
+
+const kv = new Redis({ url, token });
 import type { Project, Vote, Settings, Archive, ArchiveSummary } from './types';
 
 const K = {
