@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Project, Vote, Scores, ArchiveSummary } from '@/lib/types';
 
+type EditForm = Omit<Project, 'id' | 'submittedAt'>;
+
 type Tab = 'overview' | 'audit' | 'scores' | 'archives';
 type Phase = 'submission' | 'voting' | 'closed';
 
@@ -90,6 +92,11 @@ export default function AdminPage() {
   const [deletingVoteId, setDeletingVoteId] = useState<string | null>(null);
   const [deletingArchiveId, setDeletingArchiveId] = useState<string | null>(null);
   const [deleteArchiveConfirm, setDeleteArchiveConfirm] = useState<string | null>(null);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+  const [deleteProjectConfirm, setDeleteProjectConfirm] = useState<string | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   const [archiveName, setArchiveName] = useState('');
   const [archiving, setArchiving] = useState(false);
@@ -202,6 +209,42 @@ export default function AdminPage() {
       setArchiving(false);
       setTimeout(() => setActionMsg(''), 4000);
     }
+  };
+
+  const openEdit = (project: Project) => {
+    setEditingProject(project);
+    setEditForm({
+      teamName: project.teamName,
+      teamMembers: project.teamMembers,
+      projectName: project.projectName,
+      useCase: project.useCase,
+      description: project.description,
+      innovative: project.innovative,
+      businessValue: project.businessValue,
+      imageUrl: project.imageUrl,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingProject || !editForm) return;
+    setEditSaving(true);
+    await fetch(`/api/projects/${editingProject.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify(editForm),
+    });
+    setEditingProject(null);
+    setEditForm(null);
+    setEditSaving(false);
+    await loadAll();
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    setDeletingProjectId(projectId);
+    await fetch(`/api/projects/${projectId}`, { method: 'DELETE', headers: authHeader });
+    setDeleteProjectConfirm(null);
+    await loadAll();
+    setDeletingProjectId(null);
   };
 
   const handleDeleteArchive = async (archiveId: string) => {
@@ -374,6 +417,7 @@ export default function AdminPage() {
                       <th className="px-6 py-3 text-left">Team</th>
                       <th className="px-6 py-3 text-left">Members</th>
                       <th className="px-6 py-3 text-left">Submitted</th>
+                      <th className="px-6 py-3 text-left"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
@@ -387,6 +431,40 @@ export default function AdminPage() {
                           <td className="px-6 py-4 text-gray-400">{p.teamMembers.join(', ')}</td>
                           <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
                             {new Date(p.submittedAt).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => openEdit(p)}
+                                className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-lg text-xs font-medium transition-colors"
+                              >
+                                Edit
+                              </button>
+                              {deleteProjectConfirm === p.id ? (
+                                <>
+                                  <button
+                                    onClick={() => handleDeleteProject(p.id)}
+                                    disabled={deletingProjectId === p.id}
+                                    className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
+                                  >
+                                    {deletingProjectId === p.id ? 'Deleting…' : 'Confirm'}
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteProjectConfirm(null)}
+                                    className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => setDeleteProjectConfirm(p.id)}
+                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-lg text-xs font-medium transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -603,6 +681,96 @@ export default function AdminPage() {
                   ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {editingProject && editForm && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center overflow-y-auto py-10 px-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-xl shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+              <h2 className="font-semibold text-white">Edit Project</h2>
+              <button onClick={() => setEditingProject(null)} className="text-gray-400 hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              {([
+                { key: 'teamName', label: 'Team Name', rows: 1 },
+                { key: 'projectName', label: 'Project Name', rows: 1 },
+                { key: 'useCase', label: 'Use Case', rows: 2 },
+                { key: 'description', label: 'Project Description', rows: 3 },
+                { key: 'innovative', label: 'Innovation', rows: 3 },
+                { key: 'businessValue', label: 'Business Value', rows: 3 },
+              ] as { key: keyof EditForm; label: string; rows: number }[]).map((field) => (
+                <div key={field.key}>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">{field.label}</label>
+                  {field.rows === 1 ? (
+                    <input
+                      type="text"
+                      value={editForm[field.key] as string}
+                      onChange={(e) => setEditForm({ ...editForm, [field.key]: e.target.value })}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                  ) : (
+                    <textarea
+                      rows={field.rows}
+                      value={editForm[field.key] as string}
+                      onChange={(e) => setEditForm({ ...editForm, [field.key]: e.target.value })}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                    />
+                  )}
+                </div>
+              ))}
+
+              {/* Team Members */}
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">Team Members</label>
+                <div className="space-y-2">
+                  {editForm.teamMembers.map((member, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={member}
+                        onChange={(e) => {
+                          const updated = [...editForm.teamMembers];
+                          updated[i] = e.target.value;
+                          setEditForm({ ...editForm, teamMembers: updated });
+                        }}
+                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                      {editForm.teamMembers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditForm({ ...editForm, teamMembers: editForm.teamMembers.filter((_, idx) => idx !== i) })}
+                          className="px-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/20 transition-colors"
+                        >✕</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditForm({ ...editForm, teamMembers: [...editForm.teamMembers, ''] })}
+                  className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                >+ Add member</button>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={editSaving}
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-medium rounded-xl transition-colors text-sm"
+                >
+                  {editSaving ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button
+                  onClick={() => setEditingProject(null)}
+                  className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
