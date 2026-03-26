@@ -155,12 +155,6 @@ export default function VotePage() {
                 >
                   <div className="text-lg mb-1">{type === 'normal' ? '👤' : '⚖️'}</div>
                   <div className="font-medium text-white capitalize">{type}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">
-                    {type === 'normal' ? '50% total weightage' : '50% total weightage'}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {type === 'normal' ? 'Shared equally among voters' : 'Shared equally among judges'}
-                  </div>
                 </button>
               ))}
             </div>

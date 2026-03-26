@@ -101,8 +101,8 @@ export default async function Home() {
           {[
             { label: 'Projects', value: projects.length, sub: `/ 20 slots` },
             { label: 'Total Votes', value: votes.length, sub: 'cast so far' },
-            { label: 'Normal Voters', value: normalVoters, sub: '50% weightage' },
-            { label: 'Judges', value: judges, sub: '50% weightage' },
+            { label: 'Normal Voters', value: normalVoters, sub: '' },
+            { label: 'Judges', value: judges, sub: '' },
           ].map((stat) => (
             <div
               key={stat.label}
