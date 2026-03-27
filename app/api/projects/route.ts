@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { teamName, teamMembers, projectName, description, innovative, businessValue, useCase, imageUrl } = body;
+  const { teamName, teamMembers, teamMemberEmails, projectName, description, innovative, businessValue, useCase, imageUrl } = body;
 
   if (!teamName?.trim() || !teamMembers?.length || !projectName?.trim() || !description?.trim() || !innovative?.trim() || !businessValue?.trim() || !useCase?.trim()) {
     return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
@@ -38,15 +38,28 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const filtered = (teamMembers as string[]).filter((m) => m.trim());
-  if (filtered.length === 0) {
+  const filteredNames = (teamMembers as string[]).filter((m) => m.trim());
+  if (filteredNames.length === 0) {
     return NextResponse.json({ error: 'At least one team member is required.' }, { status: 400 });
+  }
+
+  if (!Array.isArray(teamMemberEmails) || teamMemberEmails.length !== filteredNames.length) {
+    return NextResponse.json({ error: 'Each team member must have an email address.' }, { status: 400 });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const filteredEmails = (teamMemberEmails as string[]).map((e) => e.trim().toLowerCase());
+  for (const email of filteredEmails) {
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: `Invalid email address: ${email}` }, { status: 400 });
+    }
   }
 
   const project: Project = {
     id: uuidv4(),
     teamName: teamName.trim(),
-    teamMembers: filtered,
+    teamMembers: filteredNames,
+    teamMemberEmails: filteredEmails,
     projectName: projectName.trim(),
     description: description.trim(),
     innovative: innovative.trim(),

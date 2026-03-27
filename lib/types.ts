@@ -2,6 +2,7 @@ export interface Project {
   id: string;
   teamName: string;
   teamMembers: string[];
+  teamMemberEmails: string[];
   projectName: string;
   description: string;
   innovative: string;

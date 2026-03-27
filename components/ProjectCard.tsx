@@ -46,7 +46,7 @@ export default function ProjectCard({ project, index }: Props) {
           <div className="flex flex-wrap gap-2 mt-1.5">
             {project.teamMembers.map((member, i) => (
               <span key={i} className="px-2 py-0.5 bg-gray-800 text-gray-300 rounded-md text-xs">
-                {member}
+                {member}{project.teamMemberEmails?.[i] ? ` (${project.teamMemberEmails[i]})` : ''}
               </span>
             ))}
           </div>

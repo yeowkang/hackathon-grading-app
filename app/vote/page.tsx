@@ -35,9 +35,21 @@ export default function VotePage() {
     });
   }, []);
 
+  const ownProjectId = projects.find((p) =>
+    p.teamMemberEmails?.includes(voterEmail.trim().toLowerCase())
+  )?.id ?? null;
+
+  const votableProjects = projects.filter((p) => p.id !== ownProjectId);
+
   const handleIdentitySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!voterName.trim()) return;
+    // Clear any pre-selected vote that matched own project
+    if (ownProjectId) {
+      if (mostInnovative === ownProjectId) setMostInnovative('');
+      if (bestBusinessValue === ownProjectId) setBestBusinessValue('');
+      if (mostLiked === ownProjectId) setMostLiked('');
+    }
     setStep('vote');
   };
 
@@ -264,6 +276,11 @@ export default function VotePage() {
           {' '}
           <span className="text-gray-500">({voterType})</span>
         </p>
+        {ownProjectId && (
+          <p className="text-yellow-400 text-sm mt-2">
+            Your own project has been excluded from the options below.
+          </p>
+        )}
       </div>
 
       {error && (
@@ -284,7 +301,7 @@ export default function VotePage() {
             </div>
 
             <div className="space-y-2">
-              {projects.map((project) => {
+              {votableProjects.map((project) => {
                 const selected = cat.value === project.id;
                 return (
                   <button

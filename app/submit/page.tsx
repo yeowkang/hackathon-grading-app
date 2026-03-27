@@ -2,9 +2,14 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface TeamMember {
+  name: string;
+  email: string;
+}
+
 interface FormData {
   teamName: string;
-  teamMembers: string[];
+  teamMembers: TeamMember[];
   projectName: string;
   description: string;
   innovative: string;
@@ -14,7 +19,7 @@ interface FormData {
 
 const INITIAL: FormData = {
   teamName: '',
-  teamMembers: [''],
+  teamMembers: [{ name: '', email: '' }],
   projectName: '',
   description: '',
   innovative: '',
@@ -43,14 +48,14 @@ export default function SubmitPage() {
   const updateField = (key: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const updateMember = (i: number, value: string) => {
+  const updateMember = (i: number, field: 'name' | 'email', value: string) => {
     const members = [...form.teamMembers];
-    members[i] = value;
+    members[i] = { ...members[i], [field]: value };
     setForm((prev) => ({ ...prev, teamMembers: members }));
   };
 
   const addMember = () =>
-    setForm((prev) => ({ ...prev, teamMembers: [...prev.teamMembers, ''] }));
+    setForm((prev) => ({ ...prev, teamMembers: [...prev.teamMembers, { name: '', email: '' }] }));
 
   const removeMember = (i: number) => {
     if (form.teamMembers.length === 1) return;
@@ -94,7 +99,12 @@ export default function SubmitPage() {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, imageUrl }),
+        body: JSON.stringify({
+          ...form,
+          teamMembers: form.teamMembers.map((m) => m.name),
+          teamMemberEmails: form.teamMembers.map((m) => m.email),
+          imageUrl,
+        }),
       });
 
       const data = await res.json();
@@ -145,14 +155,22 @@ export default function SubmitPage() {
           <label className="block text-sm font-medium text-gray-300 mb-1.5">
             Team Members <span className="text-red-400">*</span>
           </label>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {form.teamMembers.map((member, i) => (
               <div key={i} className="flex gap-2">
                 <input
                   type="text"
-                  value={member}
-                  onChange={(e) => updateMember(i, e.target.value)}
+                  value={member.name}
+                  onChange={(e) => updateMember(i, 'name', e.target.value)}
                   placeholder={`Member ${i + 1} name`}
+                  className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  required
+                />
+                <input
+                  type="email"
+                  value={member.email}
+                  onChange={(e) => updateMember(i, 'email', e.target.value)}
+                  placeholder={`Member ${i + 1} email`}
                   className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
                   required
                 />

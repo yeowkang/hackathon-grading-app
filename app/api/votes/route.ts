@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 import { v4 as uuidv4 } from 'uuid';
-import { createVote, getVotes, getSettings } from '@/lib/kv';
+import { createVote, getVotes, getSettings, getProjects } from '@/lib/kv';
 import type { Vote } from '@/lib/types';
 
 export async function GET() {
@@ -33,6 +33,16 @@ export async function POST(req: NextRequest) {
   const duplicate = votes.find((v) => v.voterEmail.toLowerCase() === normalizedEmail);
   if (duplicate) {
     return NextResponse.json({ error: 'already_voted' }, { status: 409 });
+  }
+
+  // Prevent voting for own project
+  const projects = await getProjects();
+  const votedProjectIds = [mostInnovative, bestBusinessValue, mostLiked];
+  for (const projectId of votedProjectIds) {
+    const project = projects.find((p) => p.id === projectId);
+    if (project?.teamMemberEmails?.includes(normalizedEmail)) {
+      return NextResponse.json({ error: 'cannot_vote_own_project' }, { status: 400 });
+    }
   }
 
   const vote: Vote = {

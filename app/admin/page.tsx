@@ -216,6 +216,7 @@ export default function AdminPage() {
     setEditForm({
       teamName: project.teamName,
       teamMembers: project.teamMembers,
+      teamMemberEmails: project.teamMemberEmails ?? project.teamMembers.map(() => ''),
       projectName: project.projectName,
       useCase: project.useCase,
       description: project.description,
@@ -428,7 +429,14 @@ export default function AdminPage() {
                           <td className="px-6 py-4 text-gray-500">{i + 1}</td>
                           <td className="px-6 py-4 text-white font-medium">{p.projectName}</td>
                           <td className="px-6 py-4 text-gray-300">{p.teamName}</td>
-                          <td className="px-6 py-4 text-gray-400">{p.teamMembers.join(', ')}</td>
+                          <td className="px-6 py-4 text-gray-400">
+                            {p.teamMembers.map((name, i) => (
+                              <span key={i}>
+                                {name}{p.teamMemberEmails?.[i] ? ` (${p.teamMemberEmails[i]})` : ''}
+                                {i < p.teamMembers.length - 1 ? ', ' : ''}
+                              </span>
+                            ))}
+                          </td>
                           <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
                             {new Date(p.submittedAt).toLocaleString()}
                           </td>
@@ -736,12 +744,32 @@ export default function AdminPage() {
                           updated[i] = e.target.value;
                           setEditForm({ ...editForm, teamMembers: updated });
                         }}
+                        placeholder="Name"
+                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
+                      />
+                      <input
+                        type="email"
+                        value={editForm.teamMemberEmails?.[i] ?? ''}
+                        onChange={(e) => {
+                          const updated = [...(editForm.teamMemberEmails ?? editForm.teamMembers.map(() => ''))];
+                          updated[i] = e.target.value;
+                          setEditForm({ ...editForm, teamMemberEmails: updated });
+                        }}
+                        placeholder="Email"
                         className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
                       />
                       {editForm.teamMembers.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => setEditForm({ ...editForm, teamMembers: editForm.teamMembers.filter((_, idx) => idx !== i) })}
+                          onClick={() => {
+                            const emails = [...(editForm.teamMemberEmails ?? editForm.teamMembers.map(() => ''))];
+                            emails.splice(i, 1);
+                            setEditForm({
+                              ...editForm,
+                              teamMembers: editForm.teamMembers.filter((_, idx) => idx !== i),
+                              teamMemberEmails: emails,
+                            });
+                          }}
                           className="px-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/20 transition-colors"
                         >✕</button>
                       )}
@@ -750,7 +778,11 @@ export default function AdminPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setEditForm({ ...editForm, teamMembers: [...editForm.teamMembers, ''] })}
+                  onClick={() => setEditForm({
+                    ...editForm,
+                    teamMembers: [...editForm.teamMembers, ''],
+                    teamMemberEmails: [...(editForm.teamMemberEmails ?? editForm.teamMembers.map(() => '')), ''],
+                  })}
                   className="mt-2 text-xs text-purple-400 hover:text-purple-300 transition-colors"
                 >+ Add member</button>
               </div>

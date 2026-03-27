@@ -26,7 +26,7 @@ export async function PATCH(
   if (req.headers.get('authorization') !== `Bearer ${ADMIN_PASSWORD}`) return unauthorized();
 
   const body = await req.json();
-  const allowed = ['teamName', 'teamMembers', 'projectName', 'useCase', 'description', 'innovative', 'businessValue', 'imageUrl'];
+  const allowed = ['teamName', 'teamMembers', 'teamMemberEmails', 'projectName', 'useCase', 'description', 'innovative', 'businessValue', 'imageUrl'];
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)));
 
   await updateProject(params.projectId, update);
