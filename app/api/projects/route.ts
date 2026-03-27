@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (useCase.trim().length > 100) {
-    return NextResponse.json({ error: 'Example Use Case must be 100 characters or fewer.' }, { status: 400 });
+    return NextResponse.json({ error: 'Use Case must be 100 characters or fewer.' }, { status: 400 });
   }
 
   for (const [field, label] of [['description', 'Project Description'], ['innovative', 'Innovation'], ['businessValue', 'Business Value']] as const) {
