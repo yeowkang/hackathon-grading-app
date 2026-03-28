@@ -19,7 +19,7 @@ export interface Vote {
   voterType: 'normal' | 'judge';
   mostInnovative: string;
   bestBusinessValue: string;
-  mostLiked: string;
+  mostLiked?: string;
   votedAt: number;
 }
 

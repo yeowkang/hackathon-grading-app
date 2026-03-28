@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { voterName, voterEmail, voterType, mostInnovative, bestBusinessValue, mostLiked } = body;
 
-  if (!voterName?.trim() || !voterEmail?.trim() || !voterType || !mostInnovative || !bestBusinessValue || !mostLiked) {
+  const isJudge = voterType === 'judge';
+  if (!voterName?.trim() || !voterEmail?.trim() || !voterType || !mostInnovative || !bestBusinessValue || (!isJudge && !mostLiked)) {
     return NextResponse.json({ error: 'All fields are required.' }, { status: 400 });
   }
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   // Prevent voting for own project
   const projects = await getProjects();
-  const votedProjectIds = [mostInnovative, bestBusinessValue, mostLiked];
+  const votedProjectIds = [mostInnovative, bestBusinessValue, ...(mostLiked ? [mostLiked] : [])];
   for (const projectId of votedProjectIds) {
     const project = projects.find((p) => p.id === projectId);
     if (project?.teamMemberEmails?.includes(normalizedEmail)) {

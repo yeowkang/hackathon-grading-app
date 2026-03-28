@@ -53,10 +53,25 @@ export default function VotePage() {
     setStep('vote');
   };
 
+  const isJudge = voterType === 'judge';
+
+  // When selecting a project in one category, clear it from other categories to prevent duplicates
+  const handleSelect = (categoryId: string, projectId: string) => {
+    if (categoryId !== 'mostInnovative' && mostInnovative === projectId) setMostInnovative('');
+    if (categoryId !== 'bestBusinessValue' && bestBusinessValue === projectId) setBestBusinessValue('');
+    if (categoryId !== 'mostLiked' && mostLiked === projectId) setMostLiked('');
+    if (categoryId === 'mostInnovative') setMostInnovative(projectId);
+    if (categoryId === 'bestBusinessValue') setBestBusinessValue(projectId);
+    if (categoryId === 'mostLiked') setMostLiked(projectId);
+  };
+
   const handleVoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mostInnovative || !bestBusinessValue || !mostLiked) {
-      setError('Please make a selection in all three categories.');
+    const requiredSelections = isJudge
+      ? !mostInnovative || !bestBusinessValue
+      : !mostInnovative || !bestBusinessValue || !mostLiked;
+    if (requiredSelections) {
+      setError(isJudge ? 'Please make a selection in both categories.' : 'Please make a selection in all three categories.');
       return;
     }
     setError('');
@@ -226,14 +241,14 @@ export default function VotePage() {
   }
 
   // Vote step
-  const categories = [
+  const allCategories = [
     {
       id: 'mostInnovative',
       label: 'Most Innovative',
       description: 'Which project impressed you most with its novel approach or technology?',
       icon: '💡',
       value: mostInnovative,
-      setter: setMostInnovative,
+      excludeIds: [bestBusinessValue, mostLiked].filter(Boolean),
       color: 'border-purple-500 bg-purple-500/10',
       selectedColor: 'text-purple-300',
     },
@@ -243,7 +258,7 @@ export default function VotePage() {
       description: 'Which project delivers the strongest real-world business impact?',
       icon: '📈',
       value: bestBusinessValue,
-      setter: setBestBusinessValue,
+      excludeIds: [mostInnovative, mostLiked].filter(Boolean),
       color: 'border-blue-500 bg-blue-500/10',
       selectedColor: 'text-blue-300',
     },
@@ -253,11 +268,14 @@ export default function VotePage() {
       description: 'Which project did you enjoy the most overall?',
       icon: '⭐',
       value: mostLiked,
-      setter: setMostLiked,
+      excludeIds: [mostInnovative, bestBusinessValue].filter(Boolean),
       color: 'border-yellow-500 bg-yellow-500/10',
       selectedColor: 'text-yellow-300',
     },
   ];
+
+  // Judges cannot vote for Most Liked
+  const categories = isJudge ? allCategories.filter((c) => c.id !== 'mostLiked') : allCategories;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
@@ -301,13 +319,13 @@ export default function VotePage() {
             </div>
 
             <div className="space-y-2">
-              {votableProjects.map((project) => {
+              {votableProjects.filter((p) => !cat.excludeIds.includes(p.id)).map((project) => {
                 const selected = cat.value === project.id;
                 return (
                   <button
                     key={project.id}
                     type="button"
-                    onClick={() => cat.setter(project.id)}
+                    onClick={() => handleSelect(cat.id, project.id)}
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                       selected
                         ? cat.color
@@ -338,13 +356,15 @@ export default function VotePage() {
           <div className="flex items-center gap-3 p-4 bg-gray-900 border border-gray-800 rounded-xl mb-4 text-sm text-gray-400">
             <span>📋</span>
             <span>
-              Votes: {[mostInnovative, bestBusinessValue, mostLiked].filter(Boolean).length} / 3 categories selected
+              {isJudge
+                ? `Votes: ${[mostInnovative, bestBusinessValue].filter(Boolean).length} / 2 categories selected`
+                : `Votes: ${[mostInnovative, bestBusinessValue, mostLiked].filter(Boolean).length} / 3 categories selected`}
             </span>
           </div>
 
           <button
             type="submit"
-            disabled={submitting || !mostInnovative || !bestBusinessValue || !mostLiked}
+            disabled={submitting || !mostInnovative || !bestBusinessValue || (!isJudge && !mostLiked)}
             className="w-full py-3.5 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
           >
             {submitting ? 'Submitting...' : 'Submit My Votes'}
